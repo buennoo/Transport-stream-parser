@@ -52,22 +52,18 @@ int main(int argc, char *argv[ ], char *envp[ ])
 
     printf("%010d ", TS_PacketId);
     TS_PacketHeader.Print();
-    printf("\n");
 
 
     // AF FIELD
     if(TS_PacketHeader.hasAdaptationField()){
-
-      std::cout << "ZAWIERA AF: "<< std::endl;
       TS_AdaptationField.Reset();
       TS_AdaptationField.Parse((uint8_t*)TS_PacketBuffer, TS_PacketHeader.hasAdaptationField());
   
-      printf("%010d ", TS_PacketId);
+      printf("\t");
       TS_AdaptationField.Print();
-      printf("\n");
     }
 
-
+    printf("\n");
     if(TS_PacketId == 20){
       break;
     }
