@@ -26,6 +26,17 @@ int main(int argc, char *argv[ ], char *envp[ ])
   char *TS_PacketBuffer = new char[188];
   uint8_t *Header = new uint8_t[4];
 
+  /*
+  na potem
+  przekastyowac pointer typu uint na pointer typu char
+  char *TS_Packet = reinterpret_cast<char*>(TS_PacketBuffer);
+  */
+
+  // Adaptation field
+  xTS_AdaptationField TS_AdaptationField;
+  uint8_t *AF = new uint8_t[2];
+
+
   while(!file.eof() )
   {
     // TODO - read from file
@@ -43,12 +54,33 @@ int main(int argc, char *argv[ ], char *envp[ ])
     TS_PacketHeader.Print();
     printf("\n");
 
+
+    // AF FIELD
+    if(TS_PacketHeader.hasAdaptationField()){
+      for(int i = 0; i < 2; i++){
+        AF[i] = (uint8_t)TS_PacketBuffer[i+4];
+      }
+      std::cout << "ZAWIERA AF: "<< std::endl;
+
+      TS_AdaptationField.Reset();
+      TS_AdaptationField.Parse(AF, TS_PacketHeader.hasAdaptationField());
+  
+
+        printf("%010d ", TS_PacketId);
+        TS_AdaptationField.Print();
+        printf("\n");
+    }
+
+
     if(TS_PacketId == 20){
       break;
     }
+    
     //nastepny pakiet (odczyt co 188 bajtow)
     TS_PacketId++;
   }
+
+
   
   // TODO - close file
   file.close();

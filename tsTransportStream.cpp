@@ -5,7 +5,6 @@
 // xTS_PacketHeader
 //=============================================================================================================================================================================
 
-
 /// @brief Reset - reset all TS packet header fields
 void xTS_PacketHeader::Reset()
 {
@@ -35,8 +34,7 @@ int32_t xTS_PacketHeader::Parse(const uint8_t* Input)
   // polaczenie 4 pierwszych bajtow do zmiennej (32-bit)
   //uint32_t *HP = (uint32_t*)Input;
 
-  // zamiana kolejnosci bajtow - big endian
-  // najbardziej znaczacy na poczatku, najmniej znaczacy na koncu
+  // zamiana kolejnosci bajtow - najbardziej znaczacy bajt pierwszy big endian
   int32_t Head = xSwapBytes32(*reinterpret_cast<const uint32_t*>(Input));
 
   m_SB = (Head & 0xff000000) >> 24;
@@ -66,3 +64,72 @@ void xTS_PacketHeader::Print() const
 }
 
 //=============================================================================================================================================================================
+
+//=============================================================================================================================================================================
+// xTS_AdaptationField
+//=============================================================================================================================================================================
+
+// @brief Reset - reset all TS packet header fields
+void xTS_AdaptationField::Reset(){
+      // reset mandatory
+      m_AdaptationFieldLength = 0;
+      m_DC = 0;
+      m_RA = 0;
+      m_SP = 0;
+      m_SF = 0;
+      m_TP = 0;
+      m_EX = 0;
+      // reset optional fields
+      m_PR = 0;
+      m_OR = 0;
+  }
+  /**
+  @brief Parse adaptation field
+  @param PacketBuffer is pointer to buffer containing TS packet
+  @param AdaptationFieldControl is value of Adaptation Field Control field of
+  corresponding TS packet header
+  @return Number of parsed bytes (length of AF or -1 on failure)
+  */
+  int32_t xTS_AdaptationField::Parse(const uint8_t* PacketBuffer, uint8_t AdaptationFieldControl){
+    //i`m empty
+    if(!AdaptationFieldControl){
+      return -1;
+    }
+    else{
+      if(PacketBuffer == nullptr){
+        return -1;
+      }
+    }
+    //parsing
+    //PacketBuffer to jest tylko czesc AF (juz wczesniej wydzielona)
+    uint16_t AField = xSwapBytes16(*(reinterpret_cast<const uint16_t*>(PacketBuffer)));
+
+    // parsing the mandatory fields
+    // buffer 
+    m_AdaptationFieldLength = (AField & 0xff000000) >> 8;
+    m_DC = (AField & 0x80) >> 7;
+    m_RA = (AField & 0x40) >> 6;
+    m_SP = (AField & 0x04) >> 5;
+
+
+    m_PR = (AField & 0x10) >> 4;
+    m_OR = (AField & 0x08) >> 3;   
+
+    m_SF = (AField & 0x10) >> 2;
+    m_TP = (AField & 0x02) >> 1;
+    m_EX = AField & 0x01;
+  }
+
+  /// @brief Print all TS packet header fields
+  void xTS_AdaptationField::Print() const{
+    //print sth
+    std::cout << "AF: L=" << (int)m_AdaptationFieldControl <<
+      " DC=" << (int)m_DC <<
+      " RA=" << (int)m_RA << 
+      " SP=" << (int)m_SP << 
+      " PR=" << (int)m_PR << 
+      " OR=" << (int)m_OR << 
+      " SF=" << (int)m_SF <<
+      " TP=" << (int)m_TP <<
+      " EX=" << (int)m_EX << std::endl;
+  }
