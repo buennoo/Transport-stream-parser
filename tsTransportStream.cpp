@@ -35,7 +35,8 @@ int32_t xTS_PacketHeader::Parse(const uint8_t* Input)
   // polaczenie 4 pierwszych bajtow do zmiennej (32-bit)
   //uint32_t *HP = (uint32_t*)Input;
 
-  // zamiana kolejnosci bajtow - najbardziej znaczacy bajt pierwszy big endian
+  // zamiana kolejnosci bajtow - big endian
+  // najbardziej znaczacy na poczatku, najmniej znaczacy na koncu
   int32_t Head = xSwapBytes32(*reinterpret_cast<const uint32_t*>(Input));
 
   m_SB = (Head & 0xff000000) >> 24;

@@ -26,12 +26,6 @@ int main(int argc, char *argv[ ], char *envp[ ])
   char *TS_PacketBuffer = new char[188];
   uint8_t *Header = new uint8_t[4];
 
-  /*
-  na potem
-  przekastyowac pointer typu uint na pointer typu char
-  char *TS_Packet = reinterpret_cast<char*>(TS_PacketBuffer);
-  */
-
   while(!file.eof() )
   {
     // TODO - read from file
