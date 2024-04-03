@@ -34,7 +34,7 @@ int main(int argc, char *argv[ ], char *envp[ ])
 
   // Adaptation field
   xTS_AdaptationField TS_AdaptationField;
-  uint8_t *AF = new uint8_t[2];
+
 
 
   while(!file.eof() )
@@ -57,18 +57,14 @@ int main(int argc, char *argv[ ], char *envp[ ])
 
     // AF FIELD
     if(TS_PacketHeader.hasAdaptationField()){
-      for(int i = 0; i < 2; i++){
-        AF[i] = (uint8_t)TS_PacketBuffer[i+4];
-      }
+
       std::cout << "ZAWIERA AF: "<< std::endl;
-
       TS_AdaptationField.Reset();
-      TS_AdaptationField.Parse(AF, TS_PacketHeader.hasAdaptationField());
+      TS_AdaptationField.Parse((uint8_t*)TS_PacketBuffer, TS_PacketHeader.hasAdaptationField());
   
-
-        printf("%010d ", TS_PacketId);
-        TS_AdaptationField.Print();
-        printf("\n");
+      printf("%010d ", TS_PacketId);
+      TS_AdaptationField.Print();
+      printf("\n");
     }
 
 

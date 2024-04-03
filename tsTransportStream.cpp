@@ -100,17 +100,22 @@ void xTS_AdaptationField::Reset(){
         return -1;
       }
     }
+
+    uint8_t *AF = new uint8_t[2];
+    for(int i = 0; i < 2; i++){
+      AF[i] = (uint8_t)PacketBuffer[i+4];
+    }
+
     //parsing
-    //PacketBuffer to jest tylko czesc AF (juz wczesniej wydzielona)
-    uint16_t AField = xSwapBytes16(*(reinterpret_cast<const uint16_t*>(PacketBuffer)));
+    //AF to wydzielona wczesniej czesc PacketBuffera
+    uint16_t AField = xSwapBytes16(*(reinterpret_cast<const uint16_t*>(AF)));
 
     // parsing the mandatory fields
     // buffer 
-    m_AdaptationFieldLength = (AField & 0xff000000) >> 8;
+    m_AdaptationFieldLength = AF[0];
     m_DC = (AField & 0x80) >> 7;
     m_RA = (AField & 0x40) >> 6;
     m_SP = (AField & 0x04) >> 5;
-
 
     m_PR = (AField & 0x10) >> 4;
     m_OR = (AField & 0x08) >> 3;   
@@ -123,7 +128,7 @@ void xTS_AdaptationField::Reset(){
   /// @brief Print all TS packet header fields
   void xTS_AdaptationField::Print() const{
     //print sth
-    std::cout << "AF: L=" << (int)m_AdaptationFieldControl <<
+    std::cout << "AF: L=" << (int)m_AdaptationFieldLength <<
       " DC=" << (int)m_DC <<
       " RA=" << (int)m_RA << 
       " SP=" << (int)m_SP << 
