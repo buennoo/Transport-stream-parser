@@ -123,6 +123,14 @@ void xTS_AdaptationField::Reset(){
     m_SF = (AField & 0x10) >> 2;
     m_TP = (AField & 0x02) >> 1;
     m_EX = AField & 0x01;
+
+    //optional fields
+    // uint8_t AFLenghtOptional = m_AdaptationFieldLength;
+    // uint8_t *AFOptional = new uint8_t[AFLenghtOptional];
+    // for(int i = 0; i < (AFLenghtOptional); i++){
+    //   AFOptional[i] = (uint8_t)PacketBuffer[i+6];
+    //   std::cout << i << " " << (int)AFOptional[i] << std::endl;
+    // }
   }
 
   /// @brief Print all TS packet header fields
