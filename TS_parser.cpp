@@ -72,8 +72,6 @@ int main(int argc, char *argv[ ], char *envp[ ])
     TS_PacketId++;
   }
 
-
-  
   // TODO - close file
   file.close();
 

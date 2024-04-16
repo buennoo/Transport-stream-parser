@@ -125,11 +125,17 @@ void xTS_AdaptationField::Reset(){
     m_EX = AField & 0x01;
 
     //optional fields
-    // uint8_t AFLenghtOptional = m_AdaptationFieldLength;
-    // uint8_t *AFOptional = new uint8_t[AFLenghtOptional];
-    // for(int i = 0; i < (AFLenghtOptional); i++){
-    //   AFOptional[i] = (uint8_t)PacketBuffer[i+6];
-    //   std::cout << i << " " << (int)AFOptional[i] << std::endl;
+    // int AFLenghtOptional = (int)m_AdaptationFieldLength;
+    // if(AFLenghtOptional){
+    //   uint16_t *AFOptional = new uint16_t[AFLenghtOptional];
+    //   std::cout << AFLenghtOptional << "lol" << std::endl;
+    //   for(int i = 0; i < (AFLenghtOptional); i++){
+    //     AFOptional[i] = (uint16_t)PacketBuffer[i+6];
+    //     std::cout << (int)AFOptional[i] << std::endl;
+    //   }
+
+    //   uint64_t m_PCR = ((uint64_t)AFOptional[0] << 32) | ((uint64_t)AFOptional[1] << 16) | (uint64_t)AFOptional[2];
+    //   std::cout << (int)m_PCR << std::endl;
     // }
   }
 
