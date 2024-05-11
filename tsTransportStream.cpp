@@ -205,6 +205,7 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
     AssemblingFinished,
   */
 
+  // zmienic miejsce
   //Packet Header ma zawsze 8 bajtow
   m_BufferSize = AdaptationField->getNumBytes() + 8;
 
@@ -220,6 +221,7 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
       return eResult::AssemblingFinished;
     }
     m_Started = true;
+    m_DataOffset = m_BufferSize;
     return eResult::AssemblingStarted;
   }
   else if(m_Started){
@@ -227,6 +229,5 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
     return eResult::AssemblingContinue;
   }
 
-  
   return eResult::UnexpectedPID;
 };
