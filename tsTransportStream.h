@@ -2,6 +2,9 @@
 #include "tsCommon.h"
 #include <string>
 
+//temp
+#include <iostream>
+
 /*
 MPEG-TS packet:
 `        3                   2                   1                   0  `
@@ -150,9 +153,8 @@ class xTS_AdaptationField
     int8_t getProgramClockReferenceFlag() const { return m_PR; }
     int8_t getOriginalProgramClockReferenceFlag() const { return m_OR; }     
     //derived values
-    uint32_t getNumBytes () const {
-      //TO-DO
-    }
+    // AF_length + 8 bitow ktore go opisuje
+    uint32_t getNumBytes() const { return this->getAdaptationFieldLength() + 8; }
 };
 
 //=============================================================================================================================================================================
@@ -217,14 +219,19 @@ class xPES_Assembler
     bool m_Started;
     xPES_PacketHeader m_PESH;
     public:
-    xPES_Assembler ();
-    ~xPES_Assembler();
+    xPES_Assembler (){
+      std::cout << "constructor" << std::endl;
+    };
+    ~xPES_Assembler(){
+      std::cout << "destructor" << std::endl;
+    };
     void Init (int32_t PID);
     eResult AbsorbPacket(const uint8_t* TransportStreamPacket, const xTS_PacketHeader* PacketHeader, const xTS_AdaptationField* AdaptationField);
     void PrintPESH () const { m_PESH.Print(); }
     uint8_t* getPacket () { return m_Buffer; }
     int32_t getNumPacketBytes() const { return m_DataOffset; }
-    protected:
+
+  protected:
     void xBufferReset ();
     void xBufferAppend(const uint8_t* Data, int32_t Size);
 };

@@ -35,7 +35,11 @@ int main(int argc, char *argv[ ], char *envp[ ])
   // Adaptation field
   xTS_AdaptationField TS_AdaptationField;
 
+  // PES 
+  xPES_Assembler PES_Assembler;
 
+  //PESH
+  xPES_PacketHeader PES_PacketHeader;
 
   while(!file.eof() )
   {
@@ -50,18 +54,46 @@ int main(int argc, char *argv[ ], char *envp[ ])
     TS_PacketHeader.Reset();
     TS_PacketHeader.Parse(Header);
 
-    printf("%010d ", TS_PacketId);
-    TS_PacketHeader.Print();
+    // printf("%010d ", TS_PacketId);
+    // TS_PacketHeader.Print();
 
 
     // AF FIELD
+    // if(TS_PacketHeader.hasAdaptationField()){
+    //   // TS_AdaptationField.Reset();
+    //   // TS_AdaptationField.Parse((uint8_t*)TS_PacketBuffer, TS_PacketHeader.hasAdaptationField());
+    //   // printf("\t");
+    //   // TS_AdaptationField.Print();
+    // }
+
+    // PES Header
+    // sprawdzenie tylko dla fonii
+    if(TS_PacketHeader.getSyncByte() == 'G' && TS_PacketHeader.getPIDentifier() == 136){
+      if(TS_PacketHeader.hasAdaptationField()) {
+        TS_AdaptationField.Reset();
+        TS_AdaptationField.Parse((uint8_t*)TS_PacketBuffer, TS_PacketHeader.hasAdaptationField());
+      }
+    }
+    printf("%010d ", TS_PacketId);
+    TS_PacketHeader.Print();
+
     if(TS_PacketHeader.hasAdaptationField()){
-      TS_AdaptationField.Reset();
-      TS_AdaptationField.Parse((uint8_t*)TS_PacketBuffer, TS_PacketHeader.hasAdaptationField());
-  
       printf("\t");
       TS_AdaptationField.Print();
     }
+    else{
+      printf("\t");
+    }
+
+    //PES Assembler
+    // xPES_Assembler::eResult Result = PES_Assembler.AbsorbPacket((uint8_t*)TS_PacketBuffer, &TS_PacketHeader, &TS_AdaptationField);
+    // switch(Result){
+    //   case xPES_Assembler::eResult::StreamPackedLost : printf("PcktLost "); break;
+    //   case xPES_Assembler::eResult::AssemblingStarted : printf("Started "); PES_Assembler.PrintPESH(); break;
+    //   case xPES_Assembler::eResult::AssemblingContinue: printf("Continue "); break;
+    //   case xPES_Assembler::eResult::AssemblingFinished: printf("Finished "); printf("PES: Len=%d", PES_Assembler.getNumPacketBytes()); break;
+    //   default: break;
+    // }
 
     printf("\n");
     if(TS_PacketId == 20){
@@ -79,5 +111,24 @@ int main(int argc, char *argv[ ], char *envp[ ])
 
   return EXIT_SUCCESS;
 }
+
+
+/*
+PES
+>= 6 bajtow lacznie
+
+PES HEADER
+- packet_start_code_prefix (3 bajty) 0x00001
+- stream_id (1 bajt)
+- PES_packet_length (2 bajty)
+--> jesli length = 0 to moze byc roznej dlugosci
+
+
+
+PES PAYLOAD
+- 
+- 
+- 
+*/
 
 //=============================================================================================================================================================================

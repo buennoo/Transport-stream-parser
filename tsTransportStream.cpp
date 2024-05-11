@@ -128,7 +128,7 @@ int32_t xTS_AdaptationField::Parse(const uint8_t* PacketBuffer, uint8_t Adaptati
   // int AFLenghtOptional = (int)m_AdaptationFieldLength;
   // if(AFLenghtOptional){
   //   uint16_t *AFOptional = new uint16_t[AFLenghtOptional];
-  //   std::cout << AFLenghtOptional << "lol" << std::endl;
+  //   std::cout << AFLenghtOptional << ";;;" << std::endl;
   //   for(int i = 0; i < (AFLenghtOptional); i++){
   //     AFOptional[i] = (uint16_t)PacketBuffer[i+6];
   //     std::cout << (int)AFOptional[i] << std::endl;
@@ -157,6 +157,10 @@ void xTS_AdaptationField::Print() const{
 // xPES_PacketHeader
 //=============================================================================================================================================================================
 
+void xPES_Assembler::Init (int32_t PID){
+  m_PID = PID;
+};
+
 void xPES_PacketHeader::Reset(){
   // reset 
   m_PacketStartCodePrefix = 0;
@@ -169,6 +173,9 @@ int32_t Parse(const uint8_t* Input){
     if(Input == nullptr){
       return -1;
     }
+    //TO-DO
+
+
 }
 
 void xPES_PacketHeader::Print() const{
@@ -187,3 +194,29 @@ void xPES_Assembler::xBufferReset (){
   m_BufferSize = 0;
   m_DataOffset = 0;
 }
+
+xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStreamPacket, const xTS_PacketHeader* PacketHeader, const xTS_AdaptationField* AdaptationField){
+  /*
+    UnexpectedPID = 1,
+    StreamPackedLost ,
+    AssemblingStarted ,
+    AssemblingContinue,
+    AssemblingFinished,
+  */
+
+  //Packet Header ma zawsze 8 bajtow
+  m_DataOffset = AdaptationField->getNumBytes() + 8;
+  
+  if(PacketHeader->getPIDentifier() >= 0){
+    Init(PacketHeader->getPIDentifier());
+  }
+
+  if(PacketHeader->getPUStartIndicator()){
+    return eResult::AssemblingStarted;
+  }
+
+  if(PacketHeader)
+
+  
+  return eResult::UnexpectedPID;
+};
