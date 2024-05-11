@@ -109,7 +109,9 @@ public:
   }
 
   //11 - kiedy oba pola sa czyli i AF i Payload
-  
+  bool     hasAFandPayload() const {
+      return (m_AFC & 0x3) != 0;
+  }
 };
 
 //=============================================================================================================================================================================
@@ -153,8 +155,8 @@ class xTS_AdaptationField
     int8_t getProgramClockReferenceFlag() const { return m_PR; }
     int8_t getOriginalProgramClockReferenceFlag() const { return m_OR; }     
     //derived values
-    // AF_length + 8 bitow ktore go opisuje
-    uint32_t getNumBytes() const { return this->getAdaptationFieldLength() + 8; }
+    // AF_length + 8 bitow (1 bajt) ktore go opisuje
+    uint32_t getNumBytes() const { return this->getAdaptationFieldLength() + 1; }
 };
 
 //=============================================================================================================================================================================
@@ -183,7 +185,7 @@ class xPES_PacketHeader
 
     public:
     void Reset();
-    int32_t Parse(const uint8_t* Input);
+    int32_t Parse(const uint8_t* PacketBuffer, uint32_t AFsize);
     void Print() const;
     public:
     //PES packet header

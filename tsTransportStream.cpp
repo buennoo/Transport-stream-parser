@@ -168,14 +168,29 @@ void xPES_PacketHeader::Reset(){
   m_PacketLength = 0;
 }
 
-int32_t Parse(const uint8_t* Input){
+int32_t xPES_PacketHeader::Parse(const uint8_t* PacketBuffer, uint32_t AFsize){
     //i`m empty
-    if(Input == nullptr){
+    if(PacketBuffer == nullptr){
       return -1;
     }
     //TO-DO
+    uint8_t *PESH = new uint8_t[6];
+    for(int i = 0; i < 6; i++){
+      PESH[i] = (uint8_t)PacketBuffer[i+4+AFsize];
+    }
 
+    //parsing
+    //PESH to wydzielona wczesniej czesc PacketBuffera
+    // uint16_t PESHeader = xSwapBytes16(*(reinterpret_cast<const uint16_t*>(PESH)));
 
+    // 24 bajty lacznie na prefix
+    m_PacketStartCodePrefix = (PESH[0] << 16) | (PESH[1] << 8) | PESH[2];
+    m_StreamId = PESH[3];
+    //lacze dwa ostatnie bajty
+    m_PacketLength = (PESH[4] << 8) | PESH[5];
+
+    delete [] PESH;
+    return 0;
 }
 
 void xPES_PacketHeader::Print() const{
@@ -204,6 +219,12 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
     AssemblingContinue,
     AssemblingFinished,
   */
+ 
+    //PESH
+  if(PacketHeader->hasAFandPayload()){
+    uint32_t AFsize = AdaptationField->getNumBytes();
+    m_PESH.Parse(TransportStreamPacket, AFsize);
+  }
 
   // zmienic miejsce
   //Packet Header ma zawsze 8 bajtow
@@ -224,7 +245,7 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
     if(PacketHeader->getAFControl() == 3){
       return eResult::AssemblingFinished;
     }
-    m_DataOffset += *TransportStreamPacket;
+    // m_DataOffset += *TransportStreamPacket;
     return eResult::AssemblingContinue;
   }
 
