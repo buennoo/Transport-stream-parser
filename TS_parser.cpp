@@ -73,31 +73,28 @@ int main(int argc, char *argv[ ], char *envp[ ])
         TS_AdaptationField.Reset();
         TS_AdaptationField.Parse((uint8_t*)TS_PacketBuffer, TS_PacketHeader.hasAdaptationField());
       }
-    }
-    printf("%010d ", TS_PacketId);
-    TS_PacketHeader.Print();
 
-    if(TS_PacketHeader.hasAdaptationField()){
-      printf("\t");
-      TS_AdaptationField.Print();
-    }
-    else{
-      printf("\t");
-    }
+      printf("%010d ", TS_PacketId);
+      TS_PacketHeader.Print();
 
-    //PES Assembler
-    xPES_Assembler::eResult Result = PES_Assembler.AbsorbPacket((uint8_t*)TS_PacketBuffer, &TS_PacketHeader, &TS_AdaptationField);
-    switch(Result){
-      case xPES_Assembler::eResult::StreamPackedLost : printf("PcktLost "); break;
-      // case xPES_Assembler::eResult::AssemblingStarted : printf("Started "); PES_Assembler.PrintPESH(); break;
-      case xPES_Assembler::eResult::AssemblingStarted : printf("Started "); break;
-      case xPES_Assembler::eResult::AssemblingContinue: printf("Continue "); break;
-      // case xPES_Assembler::eResult::AssemblingFinished: printf("Finished "); printf("PES: Len=%d", PES_Assembler.getNumPacketBytes()); break;
-      case xPES_Assembler::eResult::AssemblingFinished: printf("Finished "); break;
-      default: break;
+      if(TS_PacketHeader.hasAdaptationField()){
+        TS_AdaptationField.Print();
+      }
+
+      //PES Assembler
+      xPES_Assembler::eResult Result = PES_Assembler.AbsorbPacket((uint8_t*)TS_PacketBuffer, &TS_PacketHeader, &TS_AdaptationField);
+      switch(Result){
+        case xPES_Assembler::eResult::StreamPackedLost : printf("PcktLost "); break;
+        // case xPES_Assembler::eResult::AssemblingStarted : printf("Started "); PES_Assembler.PrintPESH(); break;
+        case xPES_Assembler::eResult::AssemblingStarted : printf("Started "); break;
+        case xPES_Assembler::eResult::AssemblingContinue: printf("Continue "); break;
+        // case xPES_Assembler::eResult::AssemblingFinished: printf("Finished "); printf("PES: Len=%d", PES_Assembler.getNumPacketBytes()); break;
+        case xPES_Assembler::eResult::AssemblingFinished: printf("Finished "); break;
+        default: break;
+      }
+      printf("\n");
     }
 
-    printf("\n");
     if(TS_PacketId == 20){
       break;
     }

@@ -60,7 +60,7 @@ void xTS_PacketHeader::Print() const
     " PID=" << (int)m_PID << 
     " TSC=" << (int)m_TSC << 
     " AFC=" << (int)m_AFC <<
-    " CC=" << (int)m_CC << std::endl;
+    " CC=" << (int)m_CC << " ";
 }
 
 //=============================================================================================================================================================================
@@ -150,7 +150,7 @@ void xTS_AdaptationField::Print() const{
     " OR=" << (int)m_OR << 
     " SF=" << (int)m_SF <<
     " TP=" << (int)m_TP <<
-    " EX=" << (int)m_EX << std::endl;
+    " EX=" << (int)m_EX << " ";
 }
 
 //=============================================================================================================================================================================
@@ -216,16 +216,15 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
   m_LastContinuityCounter = PacketHeader->getContinuityCounter();
   //tutaj dopisz
   if(PacketHeader->getPUStartIndicator() == 1){
-    if(m_Started){
-      m_Started = false;
-      return eResult::AssemblingFinished;
-    }
     m_Started = true;
     m_DataOffset = m_BufferSize;
     return eResult::AssemblingStarted;
   }
   else if(m_Started){
-    m_DataOffset += 1;
+    if(PacketHeader->getAFControl() == 3){
+      return eResult::AssemblingFinished;
+    }
+    m_DataOffset += *TransportStreamPacket;
     return eResult::AssemblingContinue;
   }
 
