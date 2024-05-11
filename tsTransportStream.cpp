@@ -220,33 +220,44 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
     AssemblingFinished,
   */
  
-    //PESH
-  if(PacketHeader->hasAFandPayload()){
+  //PESH
+  m_PESH.Reset();
+  if(PacketHeader->hasAFandPayload() && PacketHeader->getPUStartIndicator() == 1){
     uint32_t AFsize = AdaptationField->getNumBytes();
     m_PESH.Parse(TransportStreamPacket, AFsize);
   }
+  else if(PacketHeader->hasPayload()){
+    // m_PESH.Parse(TransportStreamPacket, 0);
+  }
 
-  // zmienic miejsce
   //Packet Header ma zawsze 8 bajtow
-  m_BufferSize = AdaptationField->getNumBytes() + 8;
+  // m_DataOffset = 188 - (AdaptationField->getNumBytes() + 8);
+
+
+  // DOPISAC
+  m_BufferSize = 0;
 
   if(PacketHeader->getPIDentifier() >= 0){
     Init(PacketHeader->getPIDentifier());
   }
 
-  m_LastContinuityCounter = PacketHeader->getContinuityCounter();
-  //tutaj dopisz
   if(PacketHeader->getPUStartIndicator() == 1){
     m_Started = true;
-    m_DataOffset = m_BufferSize;
+    m_DataOffset = m_PESH.getPacketLength();
+    m_LastContinuityCounter = PacketHeader->getContinuityCounter();
     return eResult::AssemblingStarted;
   }
   else if(m_Started){
-    if(PacketHeader->getAFControl() == 3){
-      return eResult::AssemblingFinished;
+  //weryfikacja ciaglosci CC
+  if(PacketHeader->getContinuityCounter() == m_LastContinuityCounter+1){
+      if(PacketHeader->getAFControl() == 3){
+        m_DataOffset = (int)m_PESH.getPacketLength();
+        return eResult::AssemblingFinished;
+      }
+      m_DataOffset += 188 - ((int)AdaptationField->getNumBytes() + 8);
+      m_LastContinuityCounter = PacketHeader->getContinuityCounter();
+      return eResult::AssemblingContinue;
     }
-    // m_DataOffset += *TransportStreamPacket;
-    return eResult::AssemblingContinue;
   }
 
   return eResult::UnexpectedPID;
