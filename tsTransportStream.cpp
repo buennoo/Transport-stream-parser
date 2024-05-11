@@ -193,6 +193,7 @@ void xPES_Assembler::xBufferReset (){
   m_Buffer = 0; // ?pointer
   m_BufferSize = 0;
   m_DataOffset = 0;
+  m_Started = false;
 }
 
 xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStreamPacket, const xTS_PacketHeader* PacketHeader, const xTS_AdaptationField* AdaptationField){
@@ -205,17 +206,26 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
   */
 
   //Packet Header ma zawsze 8 bajtow
-  m_DataOffset = AdaptationField->getNumBytes() + 8;
-  
+  m_BufferSize = AdaptationField->getNumBytes() + 8;
+
   if(PacketHeader->getPIDentifier() >= 0){
     Init(PacketHeader->getPIDentifier());
   }
 
-  if(PacketHeader->getPUStartIndicator()){
+  m_LastContinuityCounter = PacketHeader->getContinuityCounter();
+  //tutaj dopisz
+  if(PacketHeader->getPUStartIndicator() == 1){
+    if(m_Started){
+      m_Started = false;
+      return eResult::AssemblingFinished;
+    }
+    m_Started = true;
     return eResult::AssemblingStarted;
   }
-
-  if(PacketHeader)
+  else if(m_Started){
+    m_DataOffset += 1;
+    return eResult::AssemblingContinue;
+  }
 
   
   return eResult::UnexpectedPID;
