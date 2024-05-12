@@ -189,6 +189,17 @@ int32_t xPES_PacketHeader::Parse(const uint8_t* PacketBuffer, uint32_t AFsize){
     //lacze dwa ostatnie bajty
     m_PacketLength = (PESH[4] << 8) | PESH[5];
 
+    // jak jest 0xBE i 0xBF to nie ma extension
+    if((int)m_StreamId != 190 and (int)m_StreamId != 191){
+      uint8_t *PES_Extension = new uint8_t[3];
+      for(int i = 0; i < 3; i++){
+        PES_Extension[i] = (uint8_t)PacketBuffer[i+4+AFsize+6];
+      }
+
+      uint8_t PESE_DataLength = PES_Extension[2];
+      std::cout << "dlugosc naglowka: " << (int)PESE_DataLength << std::endl;
+    }
+
     delete [] PESH;
     return 0;
 }
@@ -205,7 +216,7 @@ void xPES_PacketHeader::Print() const{
 //=============================================================================================================================================================================
 
 void xPES_Assembler::xBufferReset (){
-  m_Buffer = 0; // ?pointer
+  m_Buffer = 0;
   m_BufferSize = 0;
   m_DataOffset = 0;
   m_Started = false;
@@ -226,8 +237,9 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
     uint32_t AFsize = AdaptationField->getNumBytes();
     m_PESH.Parse(TransportStreamPacket, AFsize);
   }
-  else if(PacketHeader->hasPayload()){
-    // m_PESH.Parse(TransportStreamPacket, 0);
+  else if(PacketHeader->hasAFandPayload()){
+      uint32_t AFsize = AdaptationField->getNumBytes();
+      m_PESH.Parse(TransportStreamPacket, AFsize);      
   }
 
   //Packet Header ma zawsze 8 bajtow
@@ -235,13 +247,14 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
 
 
   // DOPISAC
-  m_BufferSize = 0;
+  m_BufferSize = m_PESH.getPacketLength();
 
   if(PacketHeader->getPIDentifier() >= 0){
     Init(PacketHeader->getPIDentifier());
   }
 
   if(PacketHeader->getPUStartIndicator() == 1){
+    xBufferReset();
     m_Started = true;
     m_DataOffset = m_PESH.getPacketLength();
     m_LastContinuityCounter = PacketHeader->getContinuityCounter();
@@ -251,10 +264,8 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
   //weryfikacja ciaglosci CC
   if(PacketHeader->getContinuityCounter() == m_LastContinuityCounter+1){
       if(PacketHeader->getAFControl() == 3){
-        m_DataOffset = (int)m_PESH.getPacketLength();
         return eResult::AssemblingFinished;
       }
-      m_DataOffset += 188 - ((int)AdaptationField->getNumBytes() + 8);
       m_LastContinuityCounter = PacketHeader->getContinuityCounter();
       return eResult::AssemblingContinue;
     }

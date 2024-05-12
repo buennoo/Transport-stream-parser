@@ -220,6 +220,9 @@ class xPES_Assembler
     int8_t m_LastContinuityCounter;
     bool m_Started;
     xPES_PacketHeader m_PESH;
+
+    //added
+    uint8_t m_PESHLength;
     public:
     xPES_Assembler (){
       std::cout << "constructor" << std::endl;
