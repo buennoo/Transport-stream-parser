@@ -197,7 +197,7 @@ int32_t xPES_PacketHeader::Parse(const uint8_t* PacketBuffer, uint32_t AFsize){
       }
 
       uint8_t PESE_DataLength = PES_Extension[2];
-      std::cout << "dlugosc naglowka: " << (int)PESE_DataLength << std::endl;
+      // std::cout << "dlugosc naglowka: " << (int)PESE_DataLength << std::endl;
     }
 
     delete [] PESH;
@@ -238,13 +238,26 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
     m_PESH.Parse(TransportStreamPacket, AFsize);
   }
   else if(PacketHeader->hasAFandPayload()){
-      uint32_t AFsize = AdaptationField->getNumBytes();
-      m_PESH.Parse(TransportStreamPacket, AFsize);      
+    uint32_t AFsize = AdaptationField->getNumBytes();
+    m_PESH.Parse(TransportStreamPacket, AFsize);  
   }
 
-  //Packet Header ma zawsze 8 bajtow
-  // m_DataOffset = 188 - (AdaptationField->getNumBytes() + 8);
+  uint16_t num = 0;
+    if(PacketHeader->hasAdaptationField()){
+      num = AdaptationField->getNumBytes();
+    }
+  
+  if(PacketHeader->hasPayload()){
+    //Packet Header ma zawsze 8 bajtow
+    m_DataOffset += 188 - num - 4;
+    // std::cout << num << " " << m_DataOffset << std::endl;
+  }
 
+  /*
+  PAYLOAD POINTER - WAZNE
+  It gives the index after this byte at which the new payload unit starts.
+  Any payload byte before the index is part of the previous payload unit. 
+  */
 
   // DOPISAC
   m_BufferSize = m_PESH.getPacketLength();
@@ -255,8 +268,9 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
 
   if(PacketHeader->getPUStartIndicator() == 1){
     xBufferReset();
+    m_DataOffset += 188 - AdaptationField->getNumBytes() - 4;
     m_Started = true;
-    m_DataOffset = m_PESH.getPacketLength();
+    // m_DataOffset = m_PESH.getPacketLength();
     m_LastContinuityCounter = PacketHeader->getContinuityCounter();
     return eResult::AssemblingStarted;
   }
