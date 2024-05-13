@@ -268,6 +268,7 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
 
   if(PacketHeader->getPUStartIndicator() == 1){
     xBufferReset();
+    m_Buffer = new uint8_t[m_BufferSize];
     m_DataOffset += 188 - AdaptationField->getNumBytes() - 4;
     m_Started = true;
     // m_DataOffset = m_PESH.getPacketLength();
@@ -284,6 +285,7 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
       return eResult::AssemblingContinue;
     }
   }
+  
 
   return eResult::UnexpectedPID;
 };

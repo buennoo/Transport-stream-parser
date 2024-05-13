@@ -99,6 +99,7 @@ int main(int argc, char *argv[ ], char *envp[ ])
         // case xPES_Assembler::eResult::AssemblingFinished: printf("Finished "); break;
         default: break;
       }
+    
       printf("\n");
     }
 
