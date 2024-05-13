@@ -216,6 +216,7 @@ void xPES_PacketHeader::Print() const{
 //=============================================================================================================================================================================
 
 void xPES_Assembler::xBufferReset (){
+  m_Buffer = nullptr;
   m_BufferSize = 0;
   m_DataOffset = 0;
   m_Started = false;
@@ -277,18 +278,18 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
       // do sprawdzenia czy ilosc bajtow, a w tym dodanych danych do tablicy m_Buffer sie zgadza
       // int temp = 0;
 
-      for(int i = 0; i < m_BufferSize; i++){
+      for(int i = 0; i < (int)m_BufferSize; i++){
         m_Buffer[i] = (uint8_t)TransportStreamPacket[i+4+AdaptationField->getNumBytes()];
         // temp++;
       }
       // std::cout << AdaptationField->getNumBytes() << "--num bytes" << std::endl;
       // std::cout << temp << "----" << std::endl;
     }
-    else if(PacketHeader->hasPayload()){
+    else if(PacketHeader->hasPayload() && !PacketHeader->hasAdaptationField()){
       // Brak adaptation field, czyli 188 bajtow, +4 bo pomijamy header
       m_BufferSize = size-4;
       m_Buffer = new uint8_t[m_BufferSize];
-      for(int i = 0; i < m_BufferSize; i++){
+      for(int i = 0; i < (int)m_BufferSize; i++){
         m_Buffer[i] = (uint8_t)TransportStreamPacket[i+4];
       }
     }
