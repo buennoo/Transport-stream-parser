@@ -222,6 +222,10 @@ void xPES_Assembler::xBufferReset (){
   m_Started = false;
 }
 
+void xPES_Assembler::xBufferAppend(const uint8_t* Data, int32_t Size){
+  
+}
+
 xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStreamPacket, const xTS_PacketHeader* PacketHeader, const xTS_AdaptationField* AdaptationField){
   /*
     UnexpectedPID = 1,
@@ -258,9 +262,27 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
   It gives the index after this byte at which the new payload unit starts.
   Any payload byte before the index is part of the previous payload unit. 
   */
+  if(PacketHeader->getPUStartIndicator() == 1){
+    m_Started = true;
+  }
 
-  // DOPISAC
-  m_BufferSize = m_PESH.getPacketLength();
+  if(m_Started){
+    m_BufferSize = m_PESH.getPacketLength();
+    m_Buffer = new uint8_t[m_BufferSize];
+    uint8_t size = 188;
+    if(PacketHeader->hasAFandPayload()){
+      uint8_t sizeAF = AdaptationField->getNumBytes();
+      for(int i = 0; i < size-4-sizeAF; i++){
+        m_Buffer += (uint8_t)TransportStreamPacket[i+4+AdaptationField->getNumBytes()];
+      }
+    }
+    else if(PacketHeader->hasPayload()){
+      // Brak adaptation field, czyli 188 bajtow, +4 bo pomijamy header
+      for(int i = 0; i < size-4; i++){
+        m_Buffer += (uint8_t)TransportStreamPacket[i+4];
+      }
+    }
+  }
 
   if(PacketHeader->getPIDentifier() >= 0){
     Init(PacketHeader->getPIDentifier());
@@ -268,7 +290,6 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
 
   if(PacketHeader->getPUStartIndicator() == 1){
     xBufferReset();
-    m_Buffer = new uint8_t[m_BufferSize];
     m_DataOffset += 188 - AdaptationField->getNumBytes() - 4;
     m_Started = true;
     // m_DataOffset = m_PESH.getPacketLength();
@@ -279,13 +300,14 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
   //weryfikacja ciaglosci CC
   if(PacketHeader->getContinuityCounter() == m_LastContinuityCounter+1){
       if(PacketHeader->getAFControl() == 3){
+        m_Started = false;
+        std::cout << m_PESH.getPacketLength() << "--------" << std::endl;
         return eResult::AssemblingFinished;
       }
       m_LastContinuityCounter = PacketHeader->getContinuityCounter();
       return eResult::AssemblingContinue;
     }
   }
-  
 
   return eResult::UnexpectedPID;
 };
