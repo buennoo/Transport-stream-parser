@@ -289,9 +289,14 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
       // Brak adaptation field, czyli 188 bajtow, +4 bo pomijamy header
       m_BufferSize = size-4;
       m_Buffer = new uint8_t[m_BufferSize];
+
+      // int temp = 0;
       for(int i = 0; i < (int)m_BufferSize; i++){
         m_Buffer[i] = (uint8_t)TransportStreamPacket[i+4];
+        // temp++;
       }
+      // std::cout << AdaptationField->getNumBytes() << "--num bytes" << std::endl;
+      // std::cout << temp << "----" << std::endl;
     }
   }
 

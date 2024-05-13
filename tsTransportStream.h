@@ -110,7 +110,7 @@ public:
 
   //11 - kiedy oba pola sa czyli i AF i Payload
   bool     hasAFandPayload() const {
-      return (m_AFC & 0x3) != 0;
+      return (m_AFC & 0x1) != 0 and (m_AFC & 0x2) != 0;
   }
 };
 
