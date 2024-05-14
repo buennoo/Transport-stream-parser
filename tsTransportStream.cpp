@@ -168,7 +168,7 @@ void xPES_PacketHeader::Reset(){
   m_PacketLength = 0;
 }
 
-int32_t xPES_PacketHeader::Parse(const uint8_t* PacketBuffer, uint32_t AFsize){
+int32_t xPES_PacketHeader::Parse(const uint8_t* PacketBuffer, uint32_t AFsize, bool hasAF){
     //i`m empty
     if(PacketBuffer == nullptr){
       return -1;
@@ -183,22 +183,43 @@ int32_t xPES_PacketHeader::Parse(const uint8_t* PacketBuffer, uint32_t AFsize){
     //PESH to wydzielona wczesniej czesc PacketBuffera
     // uint16_t PESHeader = xSwapBytes16(*(reinterpret_cast<const uint16_t*>(PESH)));
 
-    // 24 bajty lacznie na prefix
+    // 24 bity lacznie na prefix
     m_PacketStartCodePrefix = (PESH[0] << 16) | (PESH[1] << 8) | PESH[2];
     m_StreamId = PESH[3];
     //lacze dwa ostatnie bajty
     m_PacketLength = (PESH[4] << 8) | PESH[5];
 
-    // jak jest 0xBE i 0xBF to nie ma extension
-    if((int)m_StreamId != 190 and (int)m_StreamId != 191){
-      uint8_t *PES_Extension = new uint8_t[3];
-      for(int i = 0; i < 3; i++){
-        PES_Extension[i] = (uint8_t)PacketBuffer[i+4+AFsize+6];
-      }
+    if(hasAF == true or hasAF == false){
+      // jak jest 0xBE i 0xBF to nie ma extension
+      if((int)m_StreamId != 190 and (int)m_StreamId != 191){
+        uint8_t *PES_Extension = new uint8_t[3];
+        for(int i = 0; i < 3; i++){
+          PES_Extension[i] = (uint8_t)PacketBuffer[i+4+AFsize+6];
+        }
+        
+        uint8_t PESE_DataLength = PES_Extension[2];
+        m_PESHLength = PES_Extension[2];
 
-      uint8_t PESE_DataLength = PES_Extension[2];
-      // std::cout << "dlugosc naglowka: " << (int)PESE_DataLength << std::endl;
+        std::cout << std::endl;
+        std::cout << "First: " << (int)PES_Extension[0] << std::endl;
+        std::cout << "Second: " << (int)PES_Extension[1] << std::endl;
+        std::cout << "PESH Length: " << (int)PES_Extension[2] << std::endl;
+
+        std::cout << "Buffer: " << (int)PacketBuffer[14] << std::endl;
+      }
     }
+    // else{
+    //   if((int)m_StreamId != 190 and (int)m_StreamId != 191){
+    //     uint8_t *PES_Extension = new uint8_t[3];
+    //     for(int i = 0; i < 3; i++){
+    //       PES_Extension[i] = (uint8_t)PacketBuffer[i+4+AFsize+6+1];
+    //     }
+
+    //     uint8_t PESE_DataLength = PES_Extension[2];
+    //     m_PESHLength = PES_Extension[2];
+    //     std::cout << "dlugosc naglowka: " << (int)m_PESHLength << std::endl;
+    //   }
+    // }
 
     delete [] PESH;
     return 0;
@@ -234,16 +255,26 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
     AssemblingContinue,
     AssemblingFinished,
   */
+
+  /*
+  Dataoffset sluzy jako licznik bajtow
+  TO-DO
+  Buffer size odczyt z headera + dlugosc naglowka
+  */
+
  
   //PESH
   m_PESH.Reset();
   if(PacketHeader->hasAFandPayload() && PacketHeader->getPUStartIndicator() == 1){
     uint32_t AFsize = AdaptationField->getNumBytes();
-    m_PESH.Parse(TransportStreamPacket, AFsize);
+    m_PESH.Parse(TransportStreamPacket, AFsize, true);
   }
   else if(PacketHeader->hasAFandPayload()){
     uint32_t AFsize = AdaptationField->getNumBytes();
-    m_PESH.Parse(TransportStreamPacket, AFsize);  
+    m_PESH.Parse(TransportStreamPacket, AFsize, true);  
+  }
+  else if(PacketHeader->hasPayload()){
+    m_PESH.Parse(TransportStreamPacket, 0, false); 
   }
 
   uint16_t num = 0;
@@ -269,16 +300,18 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
   if(m_Started){
     // m_BufferSize = m_PESH.getPacketLength();
     uint8_t size = 188;
+    uint8_t tempSize = 0;
 
     if(PacketHeader->hasAFandPayload()){
       uint8_t sizeAF = AdaptationField->getNumBytes();
-      m_BufferSize = size-4-sizeAF;
-      m_Buffer = new uint8_t[m_BufferSize];
+      //tu data offset jako licznik
+      uint8_t tempSize = size-4-sizeAF;
+      m_Buffer = new uint8_t[tempSize];
 
       // do sprawdzenia czy ilosc bajtow, a w tym dodanych danych do tablicy m_Buffer sie zgadza
       // int temp = 0;
 
-      for(int i = 0; i < (int)m_BufferSize; i++){
+      for(int i = 0; i < (int)tempSize; i++){
         m_Buffer[i] = (uint8_t)TransportStreamPacket[i+4+AdaptationField->getNumBytes()];
         // temp++;
       }
@@ -287,11 +320,11 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
     }
     else if(PacketHeader->hasPayload() && !PacketHeader->hasAdaptationField()){
       // Brak adaptation field, czyli 188 bajtow, +4 bo pomijamy header
-      m_BufferSize = size-4;
-      m_Buffer = new uint8_t[m_BufferSize];
+      tempSize = size-4;
+      m_Buffer = new uint8_t[tempSize];
 
       // int temp = 0;
-      for(int i = 0; i < (int)m_BufferSize; i++){
+      for(int i = 0; i < (int)tempSize; i++){
         m_Buffer[i] = (uint8_t)TransportStreamPacket[i+4];
         // temp++;
       }
@@ -311,15 +344,19 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
       xBufferReset();
       m_DataOffset += 188 - AdaptationField->getNumBytes() - 4;
       m_Started = true;
-      // m_DataOffset = m_PESH.getPacketLength();
       m_LastContinuityCounter = PacketHeader->getContinuityCounter();
+      
+      // BufferSize = PES Header Length + Paylod
+      m_BufferSize = m_PESH.getPacketLength() + m_PESH.getPESHLength();
       return eResult::AssemblingStarted;
     }
     else if(m_Started){
     //weryfikacja ciaglosci CC
-      if(PacketHeader->getContinuityCounter() == m_LastContinuityCounter+1){
-          if(PacketHeader->getAFControl() == 3){
+      if(PacketHeader->getContinuityCounter() == m_LastContinuityCounter+1 && PacketHeader->hasPayload()){
+        // tu nie powinno byc + 1
+          if(m_DataOffset == m_BufferSize + 1){
             m_Started = false;
+            m_LastContinuityCounter = PacketHeader->getContinuityCounter();
             return eResult::AssemblingFinished;
           }
           m_LastContinuityCounter = PacketHeader->getContinuityCounter();
