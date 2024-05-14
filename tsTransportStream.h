@@ -110,7 +110,7 @@ public:
 
   //11 - kiedy oba pola sa czyli i AF i Payload
   bool     hasAFandPayload() const {
-      return (m_AFC & 0x3) != 0;
+      return (m_AFC & 0x1) != 0 and (m_AFC & 0x2) != 0;
   }
 };
 
@@ -183,15 +183,21 @@ class xPES_PacketHeader
     uint8_t m_StreamId;
     uint16_t m_PacketLength;
 
+    //added
+    uint8_t m_PESHLength;
+
     public:
     void Reset();
-    int32_t Parse(const uint8_t* PacketBuffer, uint32_t AFsize);
+    int32_t Parse(const uint8_t* PacketBuffer, uint32_t AFsize, bool hasAF);
     void Print() const;
     public:
     //PES packet header
     uint32_t getPacketStartCodePrefix() const { return m_PacketStartCodePrefix; }
     uint8_t getStreamId () const { return m_StreamId; }
     uint16_t getPacketLength () const { return m_PacketLength; }
+    
+    //added
+    uint8_t getPESHLength () const { return m_PESHLength; }
 };
 
 //=============================================================================================================================================================================
@@ -221,14 +227,13 @@ class xPES_Assembler
     bool m_Started;
     xPES_PacketHeader m_PESH;
 
-    //added
-    uint8_t m_PESHLength;
     public:
     xPES_Assembler (){
       std::cout << "constructor" << std::endl;
     };
     ~xPES_Assembler(){
       std::cout << "destructor" << std::endl;
+      delete m_Buffer;
     };
     void Init (int32_t PID);
     eResult AbsorbPacket(const uint8_t* TransportStreamPacket, const xTS_PacketHeader* PacketHeader, const xTS_AdaptationField* AdaptationField);
