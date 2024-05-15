@@ -64,7 +64,6 @@ int main(int argc, char *argv[ ], char *envp[ ])
     //   // TS_AdaptationField.Print();
     // }
 
-
     // PES Header
     // sprawdzenie tylko dla fonii
     if(TS_PacketHeader.getSyncByte() == 'G' && TS_PacketHeader.getPIDentifier() == 136){
@@ -99,11 +98,10 @@ int main(int argc, char *argv[ ], char *envp[ ])
         // case xPES_Assembler::eResult::AssemblingFinished: printf("Finished "); break;
         default: break;
       }
-    
       printf("\n");
     }
 
-    if(TS_PacketId == 20){
+    if(TS_PacketId == 200){
       break;
     }
     

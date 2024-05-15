@@ -1,9 +1,10 @@
 #pragma once
 #include "tsCommon.h"
 #include <string>
-
+#include <fstream>
 //temp
 #include <iostream>
+
 
 /*
 MPEG-TS packet:
@@ -227,6 +228,9 @@ class xPES_Assembler
     bool m_Started;
     xPES_PacketHeader m_PESH;
 
+    // for writing to file
+    std::ofstream file;
+
     public:
     xPES_Assembler (){
       std::cout << "constructor" << std::endl;
@@ -244,4 +248,6 @@ class xPES_Assembler
   protected:
     void xBufferReset ();
     void xBufferAppend(const uint8_t* Data, int32_t Size);
+    int writeToFile(uint8_t const writeData);
+
 };

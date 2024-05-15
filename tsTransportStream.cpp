@@ -1,5 +1,6 @@
 #include "tsTransportStream.h"
 #include <iostream>
+#include <fstream>
 
 //=============================================================================================================================================================================
 // xTS_PacketHeader
@@ -225,7 +226,8 @@ int32_t xPES_PacketHeader::Parse(const uint8_t* PacketBuffer, uint32_t AFsize, b
         std::cout << "Second: " << (int)PES_Extension[1] << std::endl;
         std::cout << "PESH Length: " << (int)PES_Extension[2] << std::endl;
 
-        std::cout << "Buffer: " << (int)PacketBuffer[14] << std::endl;
+        // to check if the PESH length is ok
+        // std::cout << "Buffer: " << (int)PacketBuffer[14] << std::endl;
       }
     }
 
@@ -253,6 +255,24 @@ void xPES_Assembler::xBufferReset (){
 
 void xPES_Assembler::xBufferAppend(const uint8_t* Data, int32_t Size){
   // w AbsorbPacket
+}
+
+int xPES_Assembler::writeToFile(uint8_t const writeArray){
+  
+  char dataToWrite = (char)writeArray;
+  char *ptrData = &dataToWrite;
+  file.open("PID136.mp2", std::ios::binary | std::fstream::app);
+
+  // TODO - check if file if opened
+  if(!file){
+    std::perror("File opening failed");
+    return EXIT_FAILURE;
+  }
+
+  file.write(ptrData, sizeof(writeArray));
+
+  file.close();
+  return EXIT_SUCCESS;
 }
 
 xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStreamPacket, const xTS_PacketHeader* PacketHeader, const xTS_AdaptationField* AdaptationField){
@@ -305,6 +325,8 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
     m_Started = true;
   }
 
+
+
   if(m_Started){
     // m_BufferSize = m_PESH.getPacketLength();
     uint8_t size = 188;
@@ -315,14 +337,16 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
       //tu data offset jako licznik
       uint8_t tempSize = size-4-sizeAF;
       m_Buffer = new uint8_t[tempSize];
-
+      uint8_t *ptrData = m_Buffer;
       // do sprawdzenia czy ilosc bajtow, a w tym dodanych danych do tablicy m_Buffer sie zgadza
       // int temp = 0;
 
       for(int i = 0; i < (int)tempSize; i++){
-        m_Buffer[i] = (uint8_t)TransportStreamPacket[i+4+AdaptationField->getNumBytes()];
+        m_Buffer[i] = TransportStreamPacket[i+4+AdaptationField->getNumBytes()+14];
+        writeToFile(m_Buffer[i]);
         // temp++;
       }
+
       // std::cout << AdaptationField->getNumBytes() << "--num bytes" << std::endl;
       // std::cout << temp << "----" << std::endl;
     }
@@ -333,7 +357,9 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
 
       // int temp = 0;
       for(int i = 0; i < (int)tempSize; i++){
-        m_Buffer[i] = (uint8_t)TransportStreamPacket[i+4];
+        // PES 6 + 9 + 5 bajtow
+        m_Buffer[i] = (uint8_t)TransportStreamPacket[i+4+9+5];
+        writeToFile(m_Buffer[i]);
         // temp++;
       }
       // std::cout << AdaptationField->getNumBytes() << "--num bytes" << std::endl;
@@ -355,7 +381,8 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
       m_LastContinuityCounter = PacketHeader->getContinuityCounter();
       
       // BufferSize = PES Header Length + Paylod
-      m_BufferSize = m_PESH.getPacketLength() + m_PESH.getPESHLength();
+      // PESH ma stala wartos 6 bajtow
+      m_BufferSize = m_PESH.getPacketLength() + 6;
       return eResult::AssemblingStarted;
     }
     else if(m_Started){
@@ -363,7 +390,7 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
       if(PacketHeader->getContinuityCounter() == m_LastContinuityCounter+1 && PacketHeader->hasPayload()){
         // tu nie powinno byc + 1
         // ale header wychodzi 5 z jakiegos powodu?
-          if(m_DataOffset == m_BufferSize + 1){
+          if(m_DataOffset == m_BufferSize){
             m_Started = false;
             m_LastContinuityCounter = PacketHeader->getContinuityCounter();
             return eResult::AssemblingFinished;
