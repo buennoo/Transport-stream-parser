@@ -101,7 +101,7 @@ int main(int argc, char *argv[ ], char *envp[ ])
       printf("\n");
     }
 
-    if(TS_PacketId == 200){
+    if(TS_PacketId == 2000){
       break;
     }
     

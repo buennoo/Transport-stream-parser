@@ -331,39 +331,60 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
     // m_BufferSize = m_PESH.getPacketLength();
     uint8_t size = 188;
     uint8_t tempSize = 0;
+    uint8_t sizeAF = AdaptationField->getNumBytes();
 
+    // JEST ADPTATION FIELD
     if(PacketHeader->hasAFandPayload()){
-      uint8_t sizeAF = AdaptationField->getNumBytes();
-      //tu data offset jako licznik
-      uint8_t tempSize = size-4-sizeAF;
-      m_Buffer = new uint8_t[tempSize];
-      uint8_t *ptrData = m_Buffer;
-      // do sprawdzenia czy ilosc bajtow, a w tym dodanych danych do tablicy m_Buffer sie zgadza
-      // int temp = 0;
+      // PUSINDICATOR = 1
+      if(PacketHeader->getPUStartIndicator()){
+        tempSize = size-4-sizeAF-14;
+        m_Buffer = new uint8_t[tempSize];
 
-      for(int i = 0; i < (int)tempSize; i++){
-        m_Buffer[i] = TransportStreamPacket[i+4+AdaptationField->getNumBytes()+14];
-        writeToFile(m_Buffer[i]);
-        // temp++;
+        int temp = 0;
+        for(int i = 0; i < (int)tempSize; i++){
+          m_Buffer[i] = TransportStreamPacket[i+4+AdaptationField->getNumBytes()+14];
+          writeToFile(m_Buffer[i]);
+          temp++;
+        }
+        std::cout << temp << std::endl;
+      }      // PRZYPADEK PUSINDICATOR = 0
+      else{
+        tempSize = size-4-sizeAF;
+        m_Buffer = new uint8_t[tempSize];
+
+        for(int i = 0; i < (int)tempSize; i++){
+          // PAYLOAD
+          m_Buffer[i] = (uint8_t)TransportStreamPacket[i+4+sizeAF];
+          writeToFile(m_Buffer[i]);
+        }
       }
-
-      // std::cout << AdaptationField->getNumBytes() << "--num bytes" << std::endl;
-      // std::cout << temp << "----" << std::endl;
     }
+    // BRAK ADPTATION FIELD
     else if(PacketHeader->hasPayload() && !PacketHeader->hasAdaptationField()){
-      // Brak adaptation field, czyli 188 bajtow, +4 bo pomijamy header
-      tempSize = size-4;
-      m_Buffer = new uint8_t[tempSize];
+      //     PRZYPADEK PUSINDICATOR = 1
+      if(PacketHeader->getPUStartIndicator()){
+        // Brak adaptation field, czyli 188 bajtow, +4 bo pomijamy header
+        tempSize = size-4-14;
+        m_Buffer = new uint8_t[tempSize];
 
-      // int temp = 0;
-      for(int i = 0; i < (int)tempSize; i++){
-        // PES 6 + 9 + 5 bajtow
-        m_Buffer[i] = (uint8_t)TransportStreamPacket[i+4+9+5];
-        writeToFile(m_Buffer[i]);
-        // temp++;
+        // int temp = 0;
+        for(int i = 0; i < (int)tempSize; i++){
+          // PES 6 + 3 + 5 bajtow -->  + 5 --> 14 bajtow
+          m_Buffer[i] = (uint8_t)TransportStreamPacket[i+4+14];
+          writeToFile(m_Buffer[i]);
+          // temp++;
+        }
+      }       // PRZYPADEK PUSINDICATOR = 0
+      else{
+        tempSize = size-4;
+        m_Buffer = new uint8_t[tempSize];
+
+        for(int i = 0; i < (int)tempSize; i++){
+          // PAYLOAD
+          m_Buffer[i] = (uint8_t)TransportStreamPacket[i+4];
+          writeToFile(m_Buffer[i]);
+        }
       }
-      // std::cout << AdaptationField->getNumBytes() << "--num bytes" << std::endl;
-      // std::cout << temp << "----" << std::endl;
     }
   }
 
