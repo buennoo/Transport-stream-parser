@@ -30,7 +30,7 @@ make
 
 5. Once the build is complete and you've launched it, you should see the results in vscode terminal.
 
-Or Create a build directory and launch the application manually by clicking the arrow next to it:<br>
+Or if you are using CMake tools Extension in VScode, you can create a build directory and launch the application manually by clicking the arrow next to it:<br>
 ![obraz](https://github.com/buennoo/Transport-stream-parser/assets/127790828/995a1dfa-86c5-4262-8cd6-180601506445)
 
 
