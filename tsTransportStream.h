@@ -109,7 +109,7 @@ public:
      return (m_AFC & 0x1) != 0;
   }
 
-  //11 - kiedy oba pola sa czyli i AF i Payload
+  //11 - adaptation field and payload
   bool     hasAFandPayload() const {
       return (m_AFC & 0x1) != 0 and (m_AFC & 0x2) != 0;
   }
@@ -156,7 +156,7 @@ class xTS_AdaptationField
     int8_t getProgramClockReferenceFlag() const { return m_PR; }
     int8_t getOriginalProgramClockReferenceFlag() const { return m_OR; }     
     //derived values
-    // AF_length + 8 bitow (1 bajt) ktore go opisuje
+    // AF_length + 1 byte which describes it
     uint32_t getNumBytes() const { return this->getAdaptationFieldLength() + 1; }
 };
 
@@ -187,8 +187,8 @@ class xPES_PacketHeader
     //added
     // EXTENSIONS
     uint8_t m_PESHLength;
-    uint8_t firstPart;
-    uint8_t secondPart;
+    uint8_t m_PESHfirst;
+    uint8_t m_PESHsecond;
 
     public:
     void Reset();
@@ -251,6 +251,5 @@ class xPES_Assembler
   protected:
     void xBufferReset ();
     void xBufferAppend(const uint8_t* Data, int32_t Size);
-    int writeToFile(uint8_t const writeData);
-
+    int writeToFile(uint8_t writeData);
 };
