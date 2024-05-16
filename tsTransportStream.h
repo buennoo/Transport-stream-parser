@@ -2,7 +2,6 @@
 #include "tsCommon.h"
 #include <string>
 #include <fstream>
-//temp
 #include <iostream>
 
 
@@ -237,6 +236,10 @@ class xPES_Assembler
     public:
     xPES_Assembler (){
       std::cout << "constructor" << std::endl;
+      if(file){
+        remove("PID136.mp2");
+      }
+      m_PESH.Reset();
     };
     ~xPES_Assembler(){
       std::cout << "destructor" << std::endl;

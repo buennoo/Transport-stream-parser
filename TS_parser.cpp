@@ -72,8 +72,10 @@ int main(int argc, char *argv[ ], char *envp[ ])
       // }
 
       //PES Assembler
-      xPES_Assembler::eResult Result = PES_Assembler.AbsorbPacket((uint8_t*)TS_PacketBuffer, &TS_PacketHeader, &TS_AdaptationField);
-
+      // verify the PID
+      if(TS_PacketHeader.getPIDentifier() == 136){
+        xPES_Assembler::eResult Result = PES_Assembler.AbsorbPacket((uint8_t*)TS_PacketBuffer, &TS_PacketHeader, &TS_AdaptationField);
+      
       //PESH
       //uint32_t startAdd = 188 - (TS_AdaptationField.getAdaptationFieldLength() + 8);
       
@@ -92,6 +94,7 @@ int main(int argc, char *argv[ ], char *envp[ ])
       //   default: break;
       // }
       // printf("\n");
+      }
     }
 
     // if(TS_PacketId == 2000){
