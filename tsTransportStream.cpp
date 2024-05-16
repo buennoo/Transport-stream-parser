@@ -1,5 +1,6 @@
 #include "tsTransportStream.h"
 #include <iostream>
+#include <fstream>
 
 //=============================================================================================================================================================================
 // xTS_PacketHeader
@@ -31,10 +32,7 @@ int32_t xTS_PacketHeader::Parse(const uint8_t* Input)
     return -1;
   }
 
-  // polaczenie 4 pierwszych bajtow do zmiennej (32-bit)
-  //uint32_t *HP = (uint32_t*)Input;
-
-  // zamiana kolejnosci bajtow - najbardziej znaczacy bajt pierwszy big endian
+  // changing bytes order - most significant byte first, big endian
   int32_t Head = xSwapBytes32(*reinterpret_cast<const uint32_t*>(Input));
 
   m_SB = (Head & 0xff000000) >> 24;
@@ -52,7 +50,6 @@ int32_t xTS_PacketHeader::Parse(const uint8_t* Input)
 /// @brief Print all TS packet header fields
 void xTS_PacketHeader::Print() const
 {
-  //print sth
   std::cout << "SB=" << (int)m_SB <<
     " E=" << (int)m_E <<
     " S=" << (int)m_S << 
@@ -106,12 +103,11 @@ int32_t xTS_AdaptationField::Parse(const uint8_t* PacketBuffer, uint8_t Adaptati
     AF[i] = (uint8_t)PacketBuffer[i+4];
   }
 
-  //parsing
-  //AF to wydzielona wczesniej czesc PacketBuffera
+  // actual parsing
+  // AF is separated previously PacketBuffer part
   uint16_t AField = xSwapBytes16(*(reinterpret_cast<const uint16_t*>(AF)));
 
   // parsing the mandatory fields
-  // buffer 
   m_AdaptationFieldLength = AF[0];
   m_DC = (AField & 0x80) >> 7;
   m_RA = (AField & 0x40) >> 6;
@@ -173,20 +169,21 @@ int32_t xPES_PacketHeader::Parse(const uint8_t* PacketBuffer, uint32_t AFsize, b
     if(PacketBuffer == nullptr){
       return -1;
     }
-    //TO-DO
+
+    // read 6 bytes
     uint8_t *PESH = new uint8_t[6];
     for(int i = 0; i < 6; i++){
       PESH[i] = (uint8_t)PacketBuffer[i+4+AFsize];
     }
 
-    //parsing
-    //PESH to wydzielona wczesniej czesc PacketBuffera
+    // actual parsing
+    // PESH is previously separated part of PacketBuffer
     // uint16_t PESHeader = xSwapBytes16(*(reinterpret_cast<const uint16_t*>(PESH)));
 
-    // 24 bity lacznie na prefix
+    // 24 bits in total for prefix
     m_PacketStartCodePrefix = (PESH[0] << 16) | (PESH[1] << 8) | PESH[2];
     m_StreamId = PESH[3];
-    //lacze dwa ostatnie bajty
+    // combine two last bytes
     m_PacketLength = (PESH[4] << 8) | PESH[5];
 
     if(hasAF == true){
@@ -200,13 +197,14 @@ int32_t xPES_PacketHeader::Parse(const uint8_t* PacketBuffer, uint32_t AFsize, b
         
         uint8_t PESE_DataLength = PES_Extension[2];
         m_PESHLength = PES_Extension[2];
+        m_PESHfirst = PES_Extension[0];
+        m_PESHsecond = PES_Extension[1];
 
-        std::cout << std::endl;
-        std::cout << "First: " << (int)PES_Extension[0] << std::endl;
-        std::cout << "Second: " << (int)PES_Extension[1] << std::endl;
-        std::cout << "PESH Length: " << (int)PES_Extension[2] << std::endl;
-
-        std::cout << "Buffer: " << (int)PacketBuffer[14] << std::endl;
+        // std::cout << std::endl;
+        // std::cout << "First: " << (int)PES_Extension[0] << std::endl;
+        // std::cout << "Second: " << (int)PES_Extension[1] << std::endl;
+        // std::cout << "PESH Length: " << (int)PES_Extension[2] << std::endl;
+        // std::cout << "Buffer: " << (int)PacketBuffer[14] << std::endl;
       }
     }
     else{
@@ -220,18 +218,18 @@ int32_t xPES_PacketHeader::Parse(const uint8_t* PacketBuffer, uint32_t AFsize, b
         uint8_t PESE_DataLength = PES_Extension[2];
         m_PESHLength = PES_Extension[2];
 
-        std::cout << std::endl;
-        std::cout << "First: " << (int)PES_Extension[0] << std::endl;
-        std::cout << "Second: " << (int)PES_Extension[1] << std::endl;
-        std::cout << "PESH Length: " << (int)PES_Extension[2] << std::endl;
-
-        std::cout << "Buffer: " << (int)PacketBuffer[14] << std::endl;
+        // std::cout << std::endl;
+        // std::cout << "First: " << (int)PES_Extension[0] << std::endl;
+        // std::cout << "Second: " << (int)PES_Extension[1] << std::endl;
+        // std::cout << "PESH Length: " << (int)PES_Extension[2] << std::endl;
+        // std::cout << "Buffer: " << (int)PacketBuffer[14] << std::endl;
       }
     }
 
     delete [] PESH;
     return 0;
 }
+
 
 void xPES_PacketHeader::Print() const{
   //print sth
@@ -252,7 +250,25 @@ void xPES_Assembler::xBufferReset (){
 }
 
 void xPES_Assembler::xBufferAppend(const uint8_t* Data, int32_t Size){
-  // w AbsorbPacket
+  // in AbsorbPacket
+}
+
+int xPES_Assembler::writeToFile(uint8_t writeArray){
+  
+  char dataToWrite = (char)writeArray;
+  char *ptrData = &dataToWrite;
+  file.open("PID136.mp2", std::ios::binary | std::fstream::app);
+
+  // check if file if opened
+  if(!file){
+    std::perror("File opening failed");
+    return EXIT_FAILURE;
+  }
+
+  file.write(ptrData, sizeof(writeArray));
+
+  file.close();
+  return EXIT_SUCCESS;
 }
 
 xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStreamPacket, const xTS_PacketHeader* PacketHeader, const xTS_AdaptationField* AdaptationField){
@@ -266,22 +282,19 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
 
   /*
   Dataoffset sluzy jako licznik bajtow
-  TO-DO
-  Buffer size odczyt z headera + dlugosc naglowka
+  Buffer size odczyt z headera + dlugosc naglowka (stala 6 bajtow)
   */
 
  
-  //PESH
+  // PESH
   m_PESH.Reset();
   if(PacketHeader->hasAFandPayload() && PacketHeader->getPUStartIndicator() == 1){
+    m_Started = true;
     uint32_t AFsize = AdaptationField->getNumBytes();
     m_PESH.Parse(TransportStreamPacket, AFsize, true);
   }
-  // else if(PacketHeader->hasAFandPayload()){
-  //   uint32_t AFsize = AdaptationField->getNumBytes();
-  //   m_PESH.Parse(TransportStreamPacket, AFsize, true);  
-  // }
   else if(PacketHeader->hasPayload() && PacketHeader->getPUStartIndicator() == 1){
+    m_Started = true;
     m_PESH.Parse(TransportStreamPacket, 0, false); 
   }
 
@@ -291,9 +304,8 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
   }
   
   if(PacketHeader->hasPayload()){
-    //Packet Header ma zawsze 8 bajtow
+    // 188 bytes - AF - Header
     m_DataOffset += 188 - num - 4;
-    // std::cout << num << " " << m_DataOffset << std::endl;
   }
 
   /*
@@ -301,52 +313,70 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
   It gives the index after this byte at which the new payload unit starts.
   Any payload byte before the index is part of the previous payload unit. 
   */
-  if(PacketHeader->getPUStartIndicator() == 1){
-    m_Started = true;
-  }
 
   if(m_Started){
     // m_BufferSize = m_PESH.getPacketLength();
     uint8_t size = 188;
     uint8_t tempSize = 0;
+    uint8_t sizeAF = AdaptationField->getNumBytes();
 
+    // WITH ADPTATION FIELD
     if(PacketHeader->hasAFandPayload()){
-      uint8_t sizeAF = AdaptationField->getNumBytes();
-      //tu data offset jako licznik
-      uint8_t tempSize = size-4-sizeAF;
-      m_Buffer = new uint8_t[tempSize];
+      // PUSINDICATOR = 1
+      if(PacketHeader->getPUStartIndicator()){
+        tempSize = size-4-sizeAF-14;
+        m_Buffer = new uint8_t[tempSize];
 
-      // do sprawdzenia czy ilosc bajtow, a w tym dodanych danych do tablicy m_Buffer sie zgadza
-      // int temp = 0;
+        for(int i = 0; i < (int)tempSize; i++){
+          m_Buffer[i] = TransportStreamPacket[i+4+AdaptationField->getNumBytes()+14];
+          writeToFile(m_Buffer[i]);
+        }
+      }   // IF PUSINDICATOR = 0
+      else{
+        tempSize = size-4-sizeAF;
+        m_Buffer = new uint8_t[tempSize];
 
-      for(int i = 0; i < (int)tempSize; i++){
-        m_Buffer[i] = (uint8_t)TransportStreamPacket[i+4+AdaptationField->getNumBytes()];
-        // temp++;
+        for(int i = 0; i < (int)tempSize; i++){
+          // PAYLOAD
+          m_Buffer[i] = (uint8_t)TransportStreamPacket[i+4+sizeAF];
+          writeToFile(m_Buffer[i]);
+        }
       }
-      // std::cout << AdaptationField->getNumBytes() << "--num bytes" << std::endl;
-      // std::cout << temp << "----" << std::endl;
     }
+    // NO ADPTATION FIELD
     else if(PacketHeader->hasPayload() && !PacketHeader->hasAdaptationField()){
-      // Brak adaptation field, czyli 188 bajtow, +4 bo pomijamy header
-      tempSize = size-4;
-      m_Buffer = new uint8_t[tempSize];
+      //     PRZYPADEK PUSINDICATOR = 1
+      if(PacketHeader->getPUStartIndicator()){
+        // no adaptation field, 188 bytes + 4 (header) + 14 (pes header)
+        tempSize = size-4-14;
+        m_Buffer = new uint8_t[tempSize];
 
-      // int temp = 0;
-      for(int i = 0; i < (int)tempSize; i++){
-        m_Buffer[i] = (uint8_t)TransportStreamPacket[i+4];
-        // temp++;
+        // int temp = 0;
+        for(int i = 0; i < (int)tempSize; i++){
+          // PES 6 + 3 + 5 bajtow -->  + 5 --> 14 bajtow
+          m_Buffer[i] = (uint8_t)TransportStreamPacket[i+4+14];
+          writeToFile(m_Buffer[i]);
+          // temp++;
+        }
+      }       // IF PUSINDICATOR = 0
+      else{
+        tempSize = size-4;
+        m_Buffer = new uint8_t[tempSize];
+
+        for(int i = 0; i < (int)tempSize; i++){
+          // PAYLOAD
+          m_Buffer[i] = (uint8_t)TransportStreamPacket[i+4];
+          writeToFile(m_Buffer[i]);
+        }
       }
-      // std::cout << AdaptationField->getNumBytes() << "--num bytes" << std::endl;
-      // std::cout << temp << "----" << std::endl;
     }
   }
-
 
   if(PacketHeader->getPIDentifier() >= 0){
     Init(PacketHeader->getPIDentifier());
   }
 
-  //weryfikacja PID
+  // verify the PID
   if(PacketHeader->getPIDentifier() == 136){
     if(PacketHeader->getPUStartIndicator() == 1){
       xBufferReset();
@@ -355,15 +385,14 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
       m_LastContinuityCounter = PacketHeader->getContinuityCounter();
       
       // BufferSize = PES Header Length + Paylod
-      m_BufferSize = m_PESH.getPacketLength() + m_PESH.getPESHLength();
+      // PESH --> 6 bytes
+      m_BufferSize = m_PESH.getPacketLength() + 6;
       return eResult::AssemblingStarted;
     }
     else if(m_Started){
-    //weryfikacja ciaglosci CC
+    // verify continuity
       if(PacketHeader->getContinuityCounter() == m_LastContinuityCounter+1 && PacketHeader->hasPayload()){
-        // tu nie powinno byc + 1
-        // ale header wychodzi 5 z jakiegos powodu?
-          if(m_DataOffset == m_BufferSize + 1){
+          if(m_DataOffset == m_BufferSize){
             m_Started = false;
             m_LastContinuityCounter = PacketHeader->getContinuityCounter();
             return eResult::AssemblingFinished;
@@ -371,11 +400,6 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
           m_LastContinuityCounter = PacketHeader->getContinuityCounter();
           return eResult::AssemblingContinue;
         }
-      else{
-        // m_Started = false;
-        // std::cout << m_PESH.getPacketLength() << "--------" << std::endl;
-        // return eResult::AssemblingFinished;
-      }
     }
   }
 
