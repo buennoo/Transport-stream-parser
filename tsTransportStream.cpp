@@ -202,12 +202,12 @@ int32_t xPES_PacketHeader::Parse(const uint8_t* PacketBuffer, uint32_t AFsize, b
         uint8_t PESE_DataLength = PES_Extension[2];
         m_PESHLength = PES_Extension[2];
 
-        std::cout << std::endl;
-        std::cout << "First: " << (int)PES_Extension[0] << std::endl;
-        std::cout << "Second: " << (int)PES_Extension[1] << std::endl;
-        std::cout << "PESH Length: " << (int)PES_Extension[2] << std::endl;
+        // std::cout << std::endl;
+        // std::cout << "First: " << (int)PES_Extension[0] << std::endl;
+        // std::cout << "Second: " << (int)PES_Extension[1] << std::endl;
+        // std::cout << "PESH Length: " << (int)PES_Extension[2] << std::endl;
 
-        std::cout << "Buffer: " << (int)PacketBuffer[14] << std::endl;
+        // std::cout << "Buffer: " << (int)PacketBuffer[14] << std::endl;
       }
     }
     else{
@@ -234,6 +234,7 @@ int32_t xPES_PacketHeader::Parse(const uint8_t* PacketBuffer, uint32_t AFsize, b
     delete [] PESH;
     return 0;
 }
+
 
 void xPES_PacketHeader::Print() const{
   //print sth
@@ -340,13 +341,10 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
         tempSize = size-4-sizeAF-14;
         m_Buffer = new uint8_t[tempSize];
 
-        int temp = 0;
         for(int i = 0; i < (int)tempSize; i++){
           m_Buffer[i] = TransportStreamPacket[i+4+AdaptationField->getNumBytes()+14];
           writeToFile(m_Buffer[i]);
-          temp++;
         }
-        std::cout << temp << std::endl;
       }      // PRZYPADEK PUSINDICATOR = 0
       else{
         tempSize = size-4-sizeAF;

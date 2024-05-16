@@ -185,7 +185,10 @@ class xPES_PacketHeader
     uint16_t m_PacketLength;
 
     //added
+    // EXTENSIONS
     uint8_t m_PESHLength;
+    uint8_t firstPart;
+    uint8_t secondPart;
 
     public:
     void Reset();
