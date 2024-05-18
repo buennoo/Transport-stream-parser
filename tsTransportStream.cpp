@@ -121,18 +121,30 @@ int32_t xTS_AdaptationField::Parse(const uint8_t* PacketBuffer, uint8_t Adaptati
   m_EX = AField & 0x01;
 
   //optional fields
-  // int AFLenghtOptional = (int)m_AdaptationFieldLength;
-  // if(AFLenghtOptional){
-  //   uint16_t *AFOptional = new uint16_t[AFLenghtOptional];
-  //   std::cout << AFLenghtOptional << ";;;" << std::endl;
-  //   for(int i = 0; i < (AFLenghtOptional); i++){
-  //     AFOptional[i] = (uint16_t)PacketBuffer[i+6];
-  //     std::cout << (int)AFOptional[i] << std::endl;
-  //   }
+  // no need int AFLenghtOptional = (int)m_AdaptationFieldLength;
+  if(m_PR){
+    std::cout << m_PR << std:: endl;
+    uint8_t *AFOptional = new uint8_t[6];
+    for(int i = 0; i < 6; i++){
+      // 4 header bytes + 2 af bytes
+      AFOptional[i] = (uint8_t)PacketBuffer[i+6];
+    }
 
-  //   uint64_t m_PCR = ((uint64_t)AFOptional[0] << 32) | ((uint64_t)AFOptional[1] << 16) | (uint64_t)AFOptional[2];
-  //   std::cout << (int)m_PCR << std::endl;
-  // }
+    m_PCR = ((uint64_t)AFOptional[0] << 40) | ((uint64_t)AFOptional[1] << 32) | ((uint64_t)AFOptional[2] << 24) | ((uint64_t)AFOptional[3] << 16) | ((uint64_t)AFOptional[4] << 8) | (uint64_t)AFOptional[5];
+    std::cout << (int)m_PCR << std::endl;
+  }
+  
+  if(m_OR){
+    std::cout << m_OR << std:: endl;
+    uint8_t *AFOptional = new uint8_t[6];
+    for(int i = 0; i < 6; i++){
+      // 4 header bytes + 2 af bytes
+      AFOptional[i] = (uint8_t)PacketBuffer[i+6];
+    }
+
+    m_OPCR = ((uint64_t)AFOptional[0] << 40) | ((uint64_t)AFOptional[1] << 32) | ((uint64_t)AFOptional[2] << 24) | ((uint64_t)AFOptional[3] << 16) | ((uint64_t)AFOptional[4] << 8) | (uint64_t)AFOptional[5];
+    std::cout << (int)m_OPCR << std::endl;
+  }
 }
 
 /// @brief Print all TS packet header fields

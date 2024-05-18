@@ -87,7 +87,7 @@ public:
   void     Print() const;
 
 public:
-  //TODO - direct acces to header field value, e.g.:
+  // direct acces to header field value, e.g.:
   uint8_t  getSyncByte() const { return m_SB; } 
   uint8_t  getTransportError() const { return m_E; }
   uint8_t  getPUStartIndicator() const { return m_S; } 
@@ -98,7 +98,7 @@ public:
   uint8_t  getContinuityCounter() const { return m_CC; } 
 
 public:
-  //TODO - derrived informations
+  // derrived informations
   bool     hasAdaptationField() const { 
   // 10 – adaptation field only, no payload 
     return (m_AFC & 0x2) != 0; 
@@ -133,9 +133,13 @@ class xTS_AdaptationField
     uint8_t  m_SF;
     uint8_t  m_TP;
     uint8_t  m_EX;
-    //optional fields - PCR
+    //optional fields - PCR, OPCR flags
     uint8_t  m_PR;
     uint8_t m_OR;
+
+    // added
+    uint64_t m_PCR;
+    uint64_t m_OPCR;
 
   public:
     void Reset();
@@ -150,6 +154,10 @@ class xTS_AdaptationField
     uint8_t getSplicingPointFlag() const { return m_SF; }
     uint8_t getTranspotPrivateDataFlag() const { return m_TP; }
     uint8_t getAdaptationFieldExtensionFlag() const { return m_EX; }
+
+    //added
+    uint8_t getPCRFlag() const { return m_PR; }
+    uint8_t getOPCRFlag() const { return m_OR; }        
 
     // optional fields
     int8_t getProgramClockReferenceFlag() const { return m_PR; }
