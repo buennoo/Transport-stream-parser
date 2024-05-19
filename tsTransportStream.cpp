@@ -76,9 +76,13 @@ void xTS_AdaptationField::Reset(){
       m_SF = 0;
       m_TP = 0;
       m_EX = 0;
-      // reset optional fields
+
       m_PR = 0;
       m_OR = 0;
+
+      // reset optional fields
+      m_PCR = 0;
+      m_OPCR = 0;
   }
 /**
   @brief Parse adaptation field
@@ -174,6 +178,11 @@ void xPES_PacketHeader::Reset(){
   m_PacketStartCodePrefix = 0;
   m_StreamId = 0;
   m_PacketLength = 0;
+
+  m_PESHLength = 0;
+  m_PESHfirst = 0;
+  m_PESHsecond = 0;
+  m_PTS_DTS = 0;
 }
 
 int32_t xPES_PacketHeader::Parse(const uint8_t* PacketBuffer, uint32_t AFsize, bool hasAF){
@@ -211,6 +220,20 @@ int32_t xPES_PacketHeader::Parse(const uint8_t* PacketBuffer, uint32_t AFsize, b
         m_PESHLength = PES_Extension[2];
         m_PESHfirst = PES_Extension[0];
         m_PESHsecond = PES_Extension[1];
+
+        // read PTS and DTS field
+        m_PTS_DTS = (m_PESHsecond >> 6);
+        std::cout << (int)m_PTS_DTS << std::endl;
+
+        if(m_PTS_DTS & 0x2){
+          // PTS data is append to the header
+          std::cout << "PTS is present" << std::endl;
+          if(m_PTS_DTS & 0x1){
+            // DTS data is append to the header
+            std::cout << "DTS is present" << std::endl;
+          }
+        }
+
 
         // std::cout << std::endl;
         // std::cout << "First: " << (int)PES_Extension[0] << std::endl;

@@ -197,6 +197,8 @@ class xPES_PacketHeader
     uint8_t m_PESHfirst;
     uint8_t m_PESHsecond;
 
+    uint8_t m_PTS_DTS;
+
     public:
     void Reset();
     int32_t Parse(const uint8_t* PacketBuffer, uint32_t AFsize, bool hasAF);
