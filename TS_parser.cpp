@@ -64,12 +64,12 @@ int main(int argc, char *argv[ ], char *envp[ ])
         TS_AdaptationField.Parse((uint8_t*)TS_PacketBuffer, TS_PacketHeader.hasAdaptationField());
       }
 
-      printf("%010d ", TS_PacketId);
-      TS_PacketHeader.Print();
+      // printf("%010d ", TS_PacketId);
+      // TS_PacketHeader.Print();
 
-      if(TS_PacketHeader.hasAdaptationField()){
-        TS_AdaptationField.Print();
-      }
+      // if(TS_PacketHeader.hasAdaptationField()){
+      //   TS_AdaptationField.Print();
+      // }
 
       //PES Assembler
       // verify the PID
@@ -85,21 +85,25 @@ int main(int argc, char *argv[ ], char *envp[ ])
       // }
 
       switch(Result){
-        case xPES_Assembler::eResult::StreamPackedLost : printf("PcktLost "); break;
-        case xPES_Assembler::eResult::AssemblingStarted : printf("Started "); PES_Assembler.PrintPESH(); break;
-        // case xPES_Assembler::eResult::AssemblingStarted : printf("Started "); break;
-        case xPES_Assembler::eResult::AssemblingContinue: printf("Continue "); break;
-        case xPES_Assembler::eResult::AssemblingFinished: printf("Finished "); printf("PES: Len=%d", PES_Assembler.getNumPacketBytes()); break;
-        // case xPES_Assembler::eResult::AssemblingFinished: printf("Finished "); break;
+        // case xPES_Assembler::eResult::StreamPackedLost : printf("PcktLost "); break;
+        // case xPES_Assembler::eResult::AssemblingStarted : printf("Started "); PES_Assembler.PrintPESH(); break;
+        // // case xPES_Assembler::eResult::AssemblingStarted : printf("Started "); break;
+        // case xPES_Assembler::eResult::AssemblingContinue: printf("Continue "); break;
+        // case xPES_Assembler::eResult::AssemblingFinished: printf("Finished "); printf("PES: Len=%d", PES_Assembler.getNumPacketBytes()); break;
+        // // case xPES_Assembler::eResult::AssemblingFinished: printf("Finished "); break;
+        case xPES_Assembler::eResult::StreamPackedLost : break;
+        case xPES_Assembler::eResult::AssemblingStarted : break;
+        case xPES_Assembler::eResult::AssemblingContinue: break;
+        case xPES_Assembler::eResult::AssemblingFinished: break;
         default: break;
       }
       printf("\n");
       }
     }
 
-    if(TS_PacketId == 20){
-      break;
-    }
+    // if(TS_PacketId == 20){
+    //   break;
+    // }
     
     // next packet (read every 188 bytes)
     TS_PacketId++;

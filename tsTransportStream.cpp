@@ -227,10 +227,10 @@ int32_t xPES_PacketHeader::Parse(const uint8_t* PacketBuffer, uint32_t AFsize, b
 
         if(m_PTS_DTS & 0x2){
           // PTS data is append to the header
-          std::cout << "PTS is present" << std::endl;
+          // std::cout << "PTS is present" << std::endl;
           if(m_PTS_DTS & 0x1){
             // DTS data is append to the header
-            std::cout << "DTS is present" << std::endl;
+            // std::cout << "DTS is present" << std::endl;
           }
         }
 
@@ -282,16 +282,19 @@ void xPES_Assembler::xBufferReset (){
   m_BufferSize = 0;
   m_DataOffset = 0;
   m_Started = false;
+  //added
+  m_toWrite = 0;
+  size_write = 0;
 }
 
 void xPES_Assembler::xBufferAppend(const uint8_t* Data, int32_t Size){
   // in AbsorbPacket
 }
 
-int xPES_Assembler::writeToFile(uint8_t writeArray){
+int xPES_Assembler::writeToFile(char *writeArray, int size){
   
-  char dataToWrite = (char)writeArray;
-  char *ptrData = &dataToWrite;
+  // char *dataToWrite = (char*)writeArray;
+  // char *ptrData = &dataToWrite;
   file.open("PID136.mp2", std::ios::binary | std::fstream::app);
 
   // check if file if opened
@@ -299,8 +302,10 @@ int xPES_Assembler::writeToFile(uint8_t writeArray){
     std::perror("File opening failed");
     return EXIT_FAILURE;
   }
-
-  file.write(ptrData, sizeof(writeArray));
+  // TO-DO 
+  // ustawic dobre sizeof (uint8_t)
+  // przekazac do funkcji dlugosc
+  file.write(writeArray, size);
 
   file.close();
   return EXIT_SUCCESS;
@@ -361,11 +366,16 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
       if(PacketHeader->getPUStartIndicator()){
         tempSize = size-4-sizeAF-14;
         m_Buffer = new uint8_t[tempSize];
+        m_toWrite = new char[tempSize];
 
         for(int i = 0; i < (int)tempSize; i++){
+          // here add writing whole array
           m_Buffer[i] = TransportStreamPacket[i+4+AdaptationField->getNumBytes()+14];
-          writeToFile(m_Buffer[i]);
+          m_toWrite[i] = (char)m_Buffer[i];
+          size_write += sizeof(m_Buffer[i]);
+          // writeToFile(m_Buffer[i]);
         }
+        writeToFile(m_toWrite, tempSize);
         xBufferReset();
         m_DataOffset += 188 - AdaptationField->getNumBytes() - 4;
         m_Started = true;
@@ -379,12 +389,16 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
       else{
         tempSize = size-4-sizeAF;
         m_Buffer = new uint8_t[tempSize];
+        m_toWrite = new char[tempSize];
 
         for(int i = 0; i < (int)tempSize; i++){
           // PAYLOAD
           m_Buffer[i] = (uint8_t)TransportStreamPacket[i+4+sizeAF];
-          writeToFile(m_Buffer[i]);
+          m_toWrite[i] = (char)m_Buffer[i];
+          size_write += sizeof(m_Buffer[i]);
+          // writeToFile(m_Buffer[i]);
         }
+        writeToFile(m_toWrite, tempSize);
       }
       if(PacketHeader->getContinuityCounter() == m_LastContinuityCounter+1){
         if(m_DataOffset == m_BufferSize){
@@ -403,14 +417,18 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
         // no adaptation field, 188 bytes + 4 (header) + 14 (pes header)
         tempSize = size-18;
         m_Buffer = new uint8_t[tempSize];
+        m_toWrite = new char[tempSize];
 
         // int temp = 0;
         for(int i = 0; i < (int)tempSize; i++){
           // PES 6 + 3 + 5 bajtow -->  + 5 --> 14 bajtow
           m_Buffer[i] = (uint8_t)TransportStreamPacket[i+18];
-          writeToFile(m_Buffer[i]);
+          m_toWrite[i] = (char)m_Buffer[i];
+          size_write += sizeof(m_Buffer[i]);
+          // writeToFile(m_Buffer[i]);
           // temp++;
         }
+        writeToFile(m_toWrite, tempSize);
         xBufferReset();
         m_DataOffset += 188 - AdaptationField->getNumBytes() - 4;
         m_Started = true;
@@ -424,12 +442,16 @@ xPES_Assembler::eResult xPES_Assembler::AbsorbPacket(const uint8_t* TransportStr
       else{
         tempSize = size-4;
         m_Buffer = new uint8_t[tempSize];
+        m_toWrite = new char[tempSize];
 
         for(int i = 0; i < (int)tempSize; i++){
           // PAYLOAD
           m_Buffer[i] = (uint8_t)TransportStreamPacket[i+4];
-          writeToFile(m_Buffer[i]);
+          m_toWrite[i] = (char)m_Buffer[i];
+          size_write += sizeof(m_Buffer[i]);
+          // writeToFile(m_Buffer[i]);
         }
+        writeToFile(m_toWrite, tempSize);
         if(PacketHeader->getContinuityCounter() == m_LastContinuityCounter+1){
           if(m_DataOffset == m_BufferSize){
             m_Started = false;

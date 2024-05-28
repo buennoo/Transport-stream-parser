@@ -235,6 +235,11 @@ class xPES_Assembler
     uint8_t* m_Buffer;
     uint32_t m_BufferSize;
     uint32_t m_DataOffset;
+
+    //added
+    char *m_toWrite;
+    int size_write;
+
     //operation
     int8_t m_LastContinuityCounter;
     bool m_Started;
@@ -245,14 +250,14 @@ class xPES_Assembler
 
     public:
     xPES_Assembler (){
-      std::cout << "constructor" << std::endl;
+      // std::cout << "constructor" << std::endl;
       if(file){
         remove("PID136.mp2");
       }
       m_PESH.Reset();
     };
     ~xPES_Assembler(){
-      std::cout << "destructor" << std::endl;
+      // std::cout << "destructor" << std::endl;
       delete m_Buffer;
     };
     void Init (int32_t PID);
@@ -264,5 +269,5 @@ class xPES_Assembler
   protected:
     void xBufferReset ();
     void xBufferAppend(const uint8_t* Data, int32_t Size);
-    int writeToFile(uint8_t writeData);
+    int writeToFile(char *writeData, int size);
 };
